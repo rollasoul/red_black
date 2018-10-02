@@ -1,0 +1,80 @@
+<html>
+	<head>
+		<script src="socket.io.js"></script>
+		<script>
+			var strcolor
+			window.addEventListener('load', function() {
+
+				var cnv = document.getElementById("thecanvas");
+
+				document.getElementById('eraser').addEventListener('click', function() {
+					console.log("change color");
+					if (strcolor == "black" ){
+						strcolor = "red";
+					} else {
+						strcolor = "black";
+					};
+					socket.emit('eraser', strcolor);
+				});
+
+				cnv.addEventListener('mousemove', function(e) {
+					console.log(e.x, e.y);
+					cnt.fillStyle="#0000FF";
+					cnt.beginPath();
+					cnt.ellipse(e.x, e.y, 1, 1, 45 * Math.PI/180, 0, 2 * Math.PI);
+					cnt.stroke();
+					var thedata = {x: e.x, y: e.y};
+					socket.emit('draw', thedata);
+
+				});
+
+				var cnt = cnv.getContext("2d");
+				cnt.canvas.width = window.innerWidth;
+				cnt.canvas.height = window.innerHeight;
+				cnt.fillStyle="red";
+				cnt.fillRect(0,0,cnv.width/2,cnv.height*0.98);
+			});
+
+
+			var socket = io.connect();
+
+			socket.on('draw', function(data) {
+				var cnv = document.getElementById("thecanvas");
+				var cnt = cnv.getContext("2d");
+				cnt.beginPath();
+				cnt.ellipse(data.x, data.y, 1, 1, 45 * Math.PI/180, 0, 2 * Math.PI);
+				cnt.stroke();
+			});
+
+			socket.on('eraser', function(strcolor) {
+				console.log("got some new strcolor: " + strcolor)
+				document.body.style.backgroundColor = "black";
+				var cnv = document.getElementById("thecanvas");
+				var cnt = cnv.getContext("2d");
+				if(strcolor == "red") {
+					cnt.strokeStyle='red';
+					console.log("New Color: " + strcolor)
+				} else {
+					cnt.strokeStyle='black';
+					console.log("New Color: " + strcolor)
+				};
+			});
+
+			socket.on('connect', function() {
+				console.log("Connected");
+			});
+
+			// Receive from any event
+			socket.on('news', function (data) {
+				console.log(data);
+			});
+
+		</script>
+	</head>
+	<body>
+		<div>
+			<input type="button" value="red/black" id="eraser">
+			<canvas id="thecanvas"></canvas>
+		</div>
+	</body>
+</html>
